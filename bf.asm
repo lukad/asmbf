@@ -63,7 +63,7 @@ readProgramByte:
         cmp byte [ecx], ']'
         je keepByte
 
-        mov byte [ecx], 0      ; Clear the last read byte
+        mov byte [ecx], 0       ; Clear the last read byte
         jmp skipByte            ; Don't increment pointer & counter
 
 keepByte:
@@ -86,9 +86,10 @@ skipByte:
         mov edi, 0              ; Set loop depth to 0
 
 run:
-        cmp byte [esi], 0
-        je exit
+        cmp byte [esi], 0       ; Check for 0 byte
+        je exit                 ; If instruction is 0 the program is over
 
+;; Handle current instruction
         cmp byte [esi], '+'
         je plus
         cmp byte [esi], '-'
@@ -128,14 +129,14 @@ left:
 
 read:
         mov ecx, edx            ; Read into current memory cell
-        push edx
+        push edx                ; Preserve memory pointer
         mov edx, 1              ; Read 1 byte
         mov ebx, 0              ; Read from STDIN
         mov eax, 3              ; Invoke SYS_READ
         int 80h
 
-        pop edx
-        jmp next
+        pop edx                 ; Restore memory pointer
+        jmp next                ; Next instruction
 
 write:
         push ecx                ; Preserve ecx
@@ -171,23 +172,23 @@ gotoLoopEnd:
         cmp byte [esi], 0       ; Check for EOF
         jz unmatchedLoopStart   ; There was an unmatched '['
 
-        cmp byte [esi], '['
-        je foundStart
+        cmp byte [esi], '['     ; Check if current instruction is '['
+        je foundStart           ; Handle '['
         cmp byte [esi], ']'     ; Check if current instruction is ']
-        je foundEnd
+        je foundEnd             ; Handke ']'
 
-        jmp gotoLoopEnd
+        jmp gotoLoopEnd         ; Check next instruction
 
 foundStart:
-        inc eax
-        jmp gotoLoopEnd
+        inc eax                 ; Increment '[' count
+        jmp gotoLoopEnd         ; Check next instruction
 
 foundEnd:
-        inc ebx
-        cmp eax, ebx
-        je next
-        jl unmatchedLoopEnd
-        jmp gotoLoopEnd
+        inc ebx                 ; Increment ']' count
+        cmp eax, ebx            ; Compare '[' and ']' count
+        je next                 ; If they are equal continue after the loop
+        jl unmatchedLoopEnd     ; If there are less '[' there is an unmatched '['
+        jmp gotoLoopEnd         ; Otherwise check next instruction
 
 endLoop:
         cmp edi, 0              ; Check if loop depth is zero
